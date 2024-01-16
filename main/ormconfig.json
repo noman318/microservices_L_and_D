@@ -1,0 +1,11 @@
+{
+  "type": "mongodb",
+  "host": "localhost",
+  "database": "main_LD",
+  "entities": ["build/entity/*.js"],
+  "cli": {
+    "entitiesDir": "src/entity"
+  },
+  "synchronize": true,
+  "logging": false
+}
