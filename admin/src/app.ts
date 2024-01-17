@@ -34,6 +34,11 @@ createConnection().then((database) => {
       );
       app.use(express.json());
 
+      app.get("/", async (req: Request, res: Response) => {
+        res.json({ message: "Testing Root Route" });
+        channel.sendToQueue("hello", Buffer.from("hello"));
+      });
+
       app.get("/api/products", async (req: Request, res: Response) => {
         const products = await productRepository.find();
         return res.json(products);
@@ -43,6 +48,11 @@ createConnection().then((database) => {
         // const { title, image, likes } = req.body;
         const product = await productRepository.create(req.body);
         const createProduct = await productRepository.save(product);
+        channel.sendToQueue(
+          "product_created",
+          Buffer.from(JSON.stringify(createProduct))
+        );
+
         return res.json(createProduct);
       });
 
@@ -52,7 +62,7 @@ createConnection().then((database) => {
           where: { id: req.params.id },
         });
 
-        console.log("product", product);
+        // console.log("product", product);
         return res.json(product);
       });
 
@@ -67,7 +77,11 @@ createConnection().then((database) => {
             if (product) {
               productRepository.merge(product, req.body);
               const result = await productRepository.save(product);
-              console.log("result", result);
+              // console.log("result", result);
+              channel.sendToQueue(
+                "product_updated",
+                Buffer.from(JSON.stringify(result))
+              );
               return res.status(200).json(result);
             }
             res.status(400).json({ message: "Product Not Found" });
@@ -83,7 +97,8 @@ createConnection().then((database) => {
           id: req.params.id,
         });
 
-        console.log("product", product);
+        // console.log("product", product);
+        channel.sendToQueue("product_deleted", Buffer.from(id));
         return res.json(product);
       });
 
@@ -107,5 +122,4 @@ createConnection().then((database) => {
       app.listen(PORT, () => console.log(`Admin Server running port ${PORT}`));
     });
   });
-  // console.log("amqpUrls", process.env.AMQP_URL);
 });
