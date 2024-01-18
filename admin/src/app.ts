@@ -57,11 +57,15 @@ createConnection().then((database) => {
       });
 
       app.get("/api/product/:id", async (req: Request, res: Response) => {
+        const { id } = req.params;
         // console.log("reqParams", req.params.id);
         const product = await productRepository.findOne({
           where: { id: req.params.id },
         });
-
+        channel.sendToQueue(
+          "get_product_by_id",
+          Buffer.from(JSON.stringify(id))
+        );
         // console.log("product", product);
         return res.json(product);
       });

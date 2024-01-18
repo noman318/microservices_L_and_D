@@ -26,6 +26,7 @@ createConnection().then((database) => {
       channel.assertQueue("product_created", { durable: false });
       channel.assertQueue("product_updated", { durable: false });
       channel.assertQueue("product_deleted", { durable: false });
+      channel.assertQueue("get_product_by_id", { durable: false });
       const app = express();
 
       app.use(
@@ -43,6 +44,17 @@ createConnection().then((database) => {
       // channel.consume("hello", (msg: any) => {
       //   console.log(msg?.content.toString());
       // });
+
+      channel.consume(
+        "get_product_by_id",
+        async (msg: any) => {
+          const eventProduct = JSON.parse(msg.content.toString());
+          const product = await productRepository.findOne(eventProduct.id);
+          console.log("get_product_by_id");
+          return product;
+        },
+        { noAck: true }
+      );
 
       channel.consume(
         "product_created",
@@ -97,7 +109,7 @@ createConnection().then((database) => {
             console.error("Error deleting project:", error);
           }
         },
-        { noAck: false }
+        { noAck: true }
       );
 
       app.get("/api/products", async (req, res) => {
